@@ -1,5 +1,7 @@
 language: cpp
 
+sudo: false
+
 compiler:
   - gcc
   - clang
@@ -7,7 +9,9 @@ compiler:
 before_install:
   - echo $LANG
   - echo $LC_ALL
-  - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get update && sudo apt-get install -y llvm-3.4 llvm-3.4-dev; fi
+  - if [ $TRAVIS_OS_NAME == linux ]; then wget http://asset.rubini.us/prebuilt/llvm-3.6-x86_64-pc-linux-gnu-gcc-4.7.tar.bz2; fi
+  - if [ $TRAVIS_OS_NAME == linux ]; then mkdir -p vendor/llvm; fi
+  - if [ $TRAVIS_OS_NAME == linux ]; then tar -C vendor/llvm -xjf llvm-3.6-x86_64-pc-linux-gnu-gcc-4.7.tar.bz2; fi
   - if [ $TRAVIS_OS_NAME == osx ]; then brew update && brew install llvm && brew link --force llvm; fi
   - rvm use $RVM --install --binary --fuzzy
   - gem update --system
@@ -15,7 +19,7 @@ before_install:
 
 before_script:
   - travis_retry bundle
-  - if [ $TRAVIS_OS_NAME == linux ]; then travis_retry ./configure --llvm-config llvm-config-3.4; fi
+  - if [ $TRAVIS_OS_NAME == linux ]; then travis_retry ./configure --llvm-config=vendor/llvm/Release+Asserts/bin/llvm-config; fi
   - if [ $TRAVIS_OS_NAME == osx ]; then travis_retry ./configure --llvm-config /usr/local/opt/llvm/bin/llvm-config; fi
 
 script: rake ci
