@@ -575,9 +575,8 @@ class Configure
       elsif @darwin
         if macports?
           config = macports_llvm_config
-        else
-          out = Bundler.with_clean_env { `brew list llvm | grep '/llvm-config$'` }
-          config = out.chomp if $?.success?
+        elsif homebrew?
+          config = homebrew_llvm_config
         end
       end
     end
@@ -1995,6 +1994,36 @@ Available commands are:
     avail_binaries     = `port contents #{latest_usable_port} |
                           fgrep llvm-config`.split
     avail_binaries.reject { |fname| fname.include? 'libexec' }.last
+  end
+
+  def get_llvm_version(llvm_config)
+    vers = `#{llvm_config} --version`
+    Gem::Version.new(vers) if $?.success?
+  end
+
+  # Check if a given version meets range requirements
+  def version_in_range?(vers, minimum, exceeded)
+    vers >= Gem::Version.new(minimum) && vers < Gem::Version.new(exceeded)
+  end
+
+  # Returns true if the *brew* command is in the PATH and responds
+  # when run interactively.
+  def homebrew?
+    `brew --version`
+    $?.success?
+  end
+
+  # Query Homebrew for the path to the latest installed version of
+  # llvm-config that is within the range of supported LLVM versions.
+  def homebrew_llvm_config
+    bindir = File.join(`brew --prefix`.chomp, 'bin')
+    latest = Dir.glob("#{bindir}/llvm-config*").inject({}) do |memo, config|
+               vers = get_llvm_version(config)
+               next if vers.nil?
+               next unless version_in_range?(vers, '3.0', '3.6')
+               { vers: vers, path: config } if memo.nil? || vers > memo[:vers]
+             end
+    latest[:path]
   end
 end
 
