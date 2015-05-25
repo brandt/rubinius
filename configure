@@ -595,7 +595,7 @@ class Configure
           @log.write "found! (version #{version} - api: #{api_version})"
           @llvm = :config
           @llvm_configure = config_cmd
-          @llvm_version = version.to_s
+          @llvm_version = version
           @llvm_api_version = api_version
 
           check_llvm_flags
