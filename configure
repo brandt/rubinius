@@ -1991,7 +1991,7 @@ Available commands are:
     version = `#{config_cmd} --version`.strip
 
     # Ruby 1.8 returns an empty string
-    return nil if version.empty?
+    return nil if version.empty? || !$?.success?
     version.sub(/svn$/, "")
   rescue Errno::ENOENT
     # Ruby 1.9 raises this error
